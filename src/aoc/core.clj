@@ -1,6 +1,6 @@
 (ns aoc.core
   (:require [clojure.java.io :refer [resource]]
-            [clojure.set :refer [intersection]]
+            [clojure.set :refer [difference intersection union]]
             [clojure.string :refer [split]]))
 
 (defn read-raw-in [i]
@@ -35,3 +35,30 @@
            :when (= c 1)]
        (let [incl (intersection (set a) (set b))]
          (apply str (remove nil? (map incl a))))))))
+
+(defn day3-base []
+  (let [coords (fn [x d]
+                 (map #(Long. %)
+                      (split (re-find (re-pattern (str "\\d+" d "\\d+")) x)
+                             (re-pattern d))))
+        idf (fn [x] (re-find #"#\d+" x))]
+    (reduce
+     (fn [acc row]
+       (let [[x y] (coords row ",")
+             [a b] (coords row "x")
+             id (idf row)]
+         (reduce
+          #(update %1 %2 (fnil conj []) id)
+          acc
+          (for [i (range x (+ x a))
+                j (range y (+ y b))]
+            [i j]))))
+     {}
+     (read-raw-in 3))))
+
+(defn day3p1 []
+  (count (filter #(> (count %) 1) (vals (day3-base)))))
+
+(defn day3p2 []
+  (letfn [(f [c] (apply union (map set (filter #(c (count %) 1) (vals (day3-base))))))]
+    (first (difference (f =) (f >)))))
